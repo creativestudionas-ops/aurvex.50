@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Cormorant";
+  src: url("https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&display=swap");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap");
+}
+
+@theme {
+  --font-cormorant: "Cormorant", serif;
+  --font-geist-mono: "Geist Mono", monospace;
+
+  /* Obsidian / Platinum palette tokens */
+  --color-obsidian: #0a0a0f;
+  --color-obsidian-light: #121218;
+  --color-platinum: #e5e5e5;
+  --color-platinum-dim: #a1a1aa;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background-color: var(--color-obsidian);
+  color: var(--color-platinum);
+}

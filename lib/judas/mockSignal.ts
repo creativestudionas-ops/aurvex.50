@@ -1,0 +1,193 @@
+import type { JudasSignal } from '@/types/judas'
+
+/**
+ * Fully populated mock JudasSignal — absolute last fallback if all APIs fail.
+ * Realistic XAU/USD values as of Apr 14 2026 (~$4,798 spot from MT5 live).
+ */
+export const mockSignal: JudasSignal = {
+  // Price
+  price: 4798.25,
+  priceChange: 58.11,
+  priceChangePct: 1.23,
+  priceStale: true,
+
+  // Grade & score
+  grade: 'A',
+  score: 74,
+  sessionLabel: 'London',
+  sessionBias: 'Long continuation',
+  judasPhase: 'Post-sweep \u00b7 long bias',
+
+  // Session chain — Asian closed, London confirmed Judas, NY pending
+  sessions: [
+    {
+      label: 'Asian',
+      high: 4787.95,
+      low: 4752.33,
+      status: 'closed',
+      direction: 'neutral',
+      note: 'Range $35.62 \u2014 liquidity building above and below',
+      judasConfirmed: false,
+    },
+    {
+      label: 'London',
+      high: 4817.86,
+      low: 4744.21,
+      status: 'judas_confirmed',
+      direction: 'bullish',
+      note: 'Swept Asian low 4752.33 \u2192 reversed through Asian high',
+      judasConfirmed: true,
+    },
+    {
+      label: 'New York',
+      high: 4803.49,
+      low: 4794.64,
+      status: 'active',
+      direction: 'bullish',
+      note: 'Continuation of London reversal \u2014 holding above OB',
+      judasConfirmed: false,
+    },
+  ],
+
+  // SMC levels
+  levels: [
+    {
+      name: 'BSL \u2014 Equal Highs',
+      type: 'BSL',
+      price: 4818.00,
+      description: 'Double-tap at 4817.86 over past 18 hours \u2014 buy stops resting above',
+      direction: 'up',
+      active: true,
+    },
+    {
+      name: 'Bullish OB (1H)',
+      type: 'OB_bull',
+      price: 4762.50,
+      priceHigh: 4768.33,
+      priceLow: 4752.33,
+      description: 'Last bearish candle before 3-candle impulse (+$46 move)',
+      direction: 'up',
+      active: true,
+    },
+    {
+      name: 'FVG (4H)',
+      type: 'FVG',
+      price: 4764.00,
+      priceHigh: 4771.04,
+      priceLow: 4757.94,
+      description: 'Unmitigated fair value gap from Apr 14 rally \u2014 potential retest magnet',
+      direction: 'up',
+      active: true,
+    },
+    {
+      name: 'SSL Swept \u2014 London Low',
+      type: 'SSL',
+      price: 4744.21,
+      description: 'London swept Asian low at 4744.21 then recovered \u2014 sell stops cleared',
+      direction: 'up',
+      active: true,
+    },
+    {
+      name: '100-Day SMA',
+      type: 'SMA',
+      price: 4620.00,
+      description: 'Dynamic support \u2014 price trading $178 above, trend intact',
+      direction: 'neutral',
+      active: false,
+    },
+  ],
+
+  // 18 factors
+  factors: [
+    { name: 'Judas Sweep Confirmed', weight: 15, value: 15, direction: 'up', note: 'London swept Asian low and reversed' },
+    { name: 'Session Trend Alignment', weight: 8, value: 8, direction: 'up', note: 'London + NY both bullish' },
+    { name: 'Bullish OB Holding', weight: 8, value: 8, direction: 'up', note: 'Price respecting 1H OB at 4762' },
+    { name: 'FVG Unmitigated Below', weight: 5, value: 3, direction: 'up', note: '4H gap at 4764 still open' },
+    { name: 'BSL Target Proximity', weight: 6, value: 6, direction: 'up', note: 'Equal highs at 4818 within reach' },
+    { name: 'SSL Cleared', weight: 6, value: 6, direction: 'up', note: 'Sell stops below Asian low taken' },
+    { name: 'DXY Weakness', weight: 5, value: 5, direction: 'up', note: 'Dollar index down -0.32%' },
+    { name: 'US 10Y Direction', weight: 4, value: 2, direction: 'up', note: 'Yields dipping slightly \u2014 mild gold tailwind' },
+    { name: 'COT Commercial Positioning', weight: 6, value: 4, direction: 'up', note: '68th percentile \u2014 smart money net long' },
+    { name: 'COT Spec Crowding', weight: 4, value: 2, direction: 'neutral', note: '55th percentile \u2014 not extreme' },
+    { name: 'Price vs 100-Day SMA', weight: 4, value: 4, direction: 'up', note: 'Holding $178 above SMA' },
+    { name: 'Range Expansion', weight: 4, value: 3, direction: 'up', note: 'London range 73.65 vs Asian 35.62' },
+    { name: 'Volume Profile', weight: 3, value: 2, direction: 'up', note: 'Above-average volume on reversal candles' },
+    { name: 'Higher Timeframe Trend', weight: 4, value: 4, direction: 'up', note: 'Daily and weekly trend both bullish' },
+    { name: 'Previous Day Close', weight: 3, value: 2, direction: 'up', note: 'Closed above prior day high' },
+    { name: 'Catalyst Risk', weight: 4, value: -2, direction: 'down', note: 'FOMC minutes tomorrow \u2014 potential volatility' },
+    { name: 'Asian Session Quality', weight: 3, value: 1, direction: 'neutral', note: 'Range $35.62, decent liquidity buildup' },
+    { name: 'Invalidation Distance', weight: 3, value: 1, direction: 'neutral', note: 'SL at 4757 = $41 risk \u2014 acceptable' },
+  ],
+
+  // COT
+  cot: {
+    commercialNet: 48200,
+    commercialPctile: 68,
+    specNet: 142800,
+    specPctile: 55,
+    weekOf: '2026-04-08',
+    stale: true,
+  },
+
+  // Macro
+  macro: {
+    dxy: 103.42,
+    dxyChange: -0.33,
+    us10y: 4.28,
+    us10yChange: -0.04,
+    stale: true,
+  },
+
+  // Trade scenarios
+  tradeScenarios: [
+    {
+      label: 'Long Continuation to BSL',
+      type: 'primary',
+      description:
+        'Enter long on pullback to 4790\u20134795 zone (NY session support). Target BSL at 4818. ' +
+        'Stop below FVG at 4757. R:R \u2248 1:1.6.',
+      invalidation: 'Price closes below 4H FVG at 4757.94 \u2014 Judas thesis invalidated.',
+    },
+    {
+      label: 'Reversal Short if BSL Swept',
+      type: 'alternate',
+      description:
+        'If price sweeps BSL at 4818 and shows bearish displacement, short targeting London low at 4744. ' +
+        'Wait for M15 bearish OB confirmation above 4815.',
+    },
+  ],
+
+  // Catalysts
+  catalysts: [
+    {
+      name: 'FOMC Meeting Minutes',
+      impact: 'high',
+      direction: 'neutral',
+      note: 'Could shift rate-cut expectations \u2014 key for USD and gold direction',
+      time: '2026-04-15 18:00 UTC',
+    },
+    {
+      name: 'US Retail Sales (Mar)',
+      impact: 'medium',
+      direction: 'down',
+      note: 'Consensus +0.3% \u2014 a miss could weaken USD and lift gold',
+      time: '2026-04-15 12:30 UTC',
+    },
+    {
+      name: 'China Q1 GDP',
+      impact: 'medium',
+      direction: 'up',
+      note: 'Strong print could boost commodity demand broadly',
+      time: '2026-04-15 02:00 UTC',
+    },
+    {
+      name: 'Geopolitical Tensions',
+      impact: 'low',
+      direction: 'up',
+      note: 'Ongoing safe-haven bid \u2014 background supportive for gold',
+    },
+  ],
+
+  // Meta
+  computedAt: new Date().toISOString(),
+}
