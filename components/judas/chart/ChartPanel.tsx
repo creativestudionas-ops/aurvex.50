@@ -27,7 +27,8 @@ export default function ChartPanel({ signal }: Props) {
   const { candles, livePrice, loading } = useChartData(interval)
   const containerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(900)
-  const chartHeight = 480
+  // Responsive chart height: shorter on mobile
+  const chartHeight = width < 640 ? 320 : 480
   const zoomResetRef = useRef<(() => void) | null>(null)
 
   // Responsive width

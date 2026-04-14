@@ -167,21 +167,21 @@ function Header({ signal, live }: Props & { live?: LivePrice }) {
   }, [])
 
   return (
-    <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-      <div className="flex items-center gap-4">
-        <h1 className="font-[Cormorant] text-2xl font-bold text-zinc-100 tracking-tight">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800 pb-4 mb-6 gap-3">
+      <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+        <h1 className="font-[Cormorant] text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">
           Judas &times; SMC
         </h1>
         <span className="rounded-sm bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
           XAU/USD
         </span>
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-zinc-500" suppressHydrationWarning>
           {signal.sessionLabel} &middot; {clock}
         </span>
         <StaleBadge show={signal.priceStale} />
       </div>
-      <div className="flex items-center gap-3 text-right">
-        <span className="font-[Geist_Mono] text-3xl font-semibold text-zinc-100 tabular-nums">
+      <div className="flex items-center gap-3 sm:text-right">
+        <span className="font-[Geist_Mono] text-2xl sm:text-3xl font-semibold text-zinc-100 tabular-nums">
           {formatPrice(p.price)}
         </span>
         <div className="flex flex-col items-end">
@@ -212,7 +212,7 @@ function MetricCard({ label, children }: { label: string; children: React.ReactN
 function MetricRow({ signal }: Props) {
   const barWidth = Math.max(0, Math.min(100, signal.score))
   return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
       <MetricCard label="SMC Grade">
         <p className={`text-2xl font-bold ${gradeColor(signal.grade)}`}>{signal.grade}</p>
       </MetricCard>
@@ -280,11 +280,11 @@ function SessionChain({ sessions }: { sessions: [SessionData, SessionData, Sessi
   return (
     <div className="mb-6">
       <h2 className="font-[Cormorant] text-sm uppercase tracking-wider text-zinc-500 mb-3">Session Chain</h2>
-      <div className="flex items-stretch gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch gap-2">
         <SessionBox session={sessions[0]} />
-        <div className="flex items-center text-zinc-600 text-lg shrink-0">&rarr;</div>
+        <div className="hidden sm:flex items-center text-zinc-600 text-lg shrink-0">&rarr;</div>
         <SessionBox session={sessions[1]} />
-        <div className="flex items-center text-zinc-600 text-lg shrink-0">&rarr;</div>
+        <div className="hidden sm:flex items-center text-zinc-600 text-lg shrink-0">&rarr;</div>
         <SessionBox session={sessions[2]} />
       </div>
     </div>
@@ -308,7 +308,7 @@ function SMCLevelsTable({ levels, stale }: { levels: SMCLevel[]; stale: boolean 
               <th className="py-2 px-3 text-left w-6" />
               <th className="py-2 px-3 text-left">Level</th>
               <th className="py-2 px-3 text-right">Price</th>
-              <th className="py-2 px-3 text-left">Description</th>
+              <th className="py-2 px-3 text-left hidden md:table-cell">Description</th>
             </tr>
           </thead>
           <tbody>
@@ -325,7 +325,7 @@ function SMCLevelsTable({ levels, stale }: { levels: SMCLevel[]; stale: boolean 
                       : formatPrice(level.price)}
                   </span>
                 </td>
-                <td className="py-2 px-3 text-zinc-500 text-xs">{level.description}</td>
+                <td className="py-2 px-3 text-zinc-500 text-xs hidden md:table-cell">{level.description}</td>
               </tr>
             ))}
           </tbody>
@@ -502,9 +502,9 @@ export default function JudasSMCDashboard({ signal }: Props) {
       <ChartPanel signal={signal} />
 
       {/* Main 2-column grid */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Left column — 2/3 */}
-        <div className="col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           <SessionChain sessions={signal.sessions} />
           <SMCLevelsTable levels={signal.levels} stale={!!levelsStale} />
         </div>
@@ -516,7 +516,7 @@ export default function JudasSMCDashboard({ signal }: Props) {
       </div>
 
       {/* Bottom 3-column row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <CotPanel cot={signal.cot} />
         <TradePanel scenarios={signal.tradeScenarios} />
         <CatalystPanel catalysts={signal.catalysts} />
