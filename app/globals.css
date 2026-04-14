@@ -26,3 +26,24 @@ body {
   background-color: var(--color-obsidian);
   color: var(--color-platinum);
 }
+
+/* Chart animations — no Framer Motion */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes entryPulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.30; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

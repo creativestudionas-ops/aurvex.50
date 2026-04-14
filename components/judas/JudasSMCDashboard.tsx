@@ -11,6 +11,7 @@ import type {
   SignalGrade,
   FactorDirection,
 } from '@/types/judas'
+import ChartPanel from './chart/ChartPanel'
 
 // ---------------------------------------------------------------------------
 // Props
@@ -496,6 +497,9 @@ export default function JudasSMCDashboard({ signal }: Props) {
 
       {/* 4-card metric row */}
       <MetricRow signal={signal} />
+
+      {/* Full-width chart panel */}
+      <ChartPanel signal={signal} />
 
       {/* Main 2-column grid */}
       <div className="grid grid-cols-3 gap-6 mb-6">
