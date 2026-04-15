@@ -107,9 +107,12 @@ export default function D3CandleChart({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     select(yAxisRef.current).call(yAxis as any)
       .call((g) => {
-        g.selectAll('text').attr('fill', '#71717a').attr('font-size', 9)
-        g.selectAll('line').attr('stroke', '#27272a')
-        g.select('.domain').attr('stroke', '#27272a')
+        g.selectAll('text')
+          .attr('fill', '#52525b')
+          .attr('font-size', 8)
+          .attr('font-family', 'var(--font-geist-mono), monospace')
+        g.selectAll('.tick line').remove()
+        g.select('.domain').remove()
       })
   }, [xScale, yScale, formatTime])
 
@@ -153,9 +156,8 @@ export default function D3CandleChart({
     }
   }, [candles.length, zoomRef])
 
-  const priceChange = livePrice && candles.length > 0
-    ? livePrice - candles[candles.length - 1].open
-    : 0
+  const priceChange = signal.priceChange
+  const priceChangePct = signal.priceChangePct
 
   return (
     <svg
@@ -182,15 +184,17 @@ export default function D3CandleChart({
         <CandleLayer candles={visibleCandles} xScale={xScale} yScale={yScale} />
         <EntryZoneLayer zone={overlays.entryZone} yScale={yScale} chartWidth={innerW} />
         <SweepAnnotationLayer
-          annotation={overlays.sweepAnnotation}
+          annotation={signal.judasPhase.includes('Post-sweep') ? overlays.sweepAnnotation : null}
           xScale={xScale}
           yScale={yScale}
+          judasPhase={signal.judasPhase}
         />
         <LivePriceLine
           price={livePrice}
           yScale={yScale}
           chartWidth={innerW}
           priceChange={priceChange}
+          priceChangePct={priceChangePct}
         />
         <g ref={xAxisRef} transform={`translate(0,${innerH})`} />
         <g ref={yAxisRef} transform={`translate(${innerW},0)`} />

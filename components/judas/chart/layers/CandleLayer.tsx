@@ -12,7 +12,8 @@ interface Props {
 
 export default function CandleLayer({ candles, xScale, yScale }: Props) {
   const bw = xScale.bandwidth()
-  const wickX = bw / 2
+  const bodyWidth = bw * 0.70
+  const bodyOffset = bw * 0.15
 
   return (
     <g className="candle-layer">
@@ -26,6 +27,8 @@ export default function CandleLayer({ candles, xScale, yScale }: Props) {
         const bodyH = candleBodyHeight(c, yScale)
         const wTop = wickTop(c, yScale)
         const wBot = wickBottom(c, yScale)
+        const bodyX = x + bodyOffset
+        const wickCX = bodyX + bodyWidth / 2
 
         return (
           <g
@@ -35,33 +38,34 @@ export default function CandleLayer({ candles, xScale, yScale }: Props) {
               animation: i === candles.length - 1 ? 'fadeIn 200ms ease-out' : undefined,
             }}
           >
-            {/* Wick */}
+            {/* z=6: Wick — 1px max, muted color */}
             <line
-              x1={x + wickX}
+              x1={wickCX}
               y1={wTop}
-              x2={x + wickX}
+              x2={wickCX}
               y2={wBot}
-              stroke="#71717a"
+              stroke="#52525b"
               strokeWidth={1}
+              opacity={0.6}
             />
-            {/* Body */}
+            {/* z=7: Body */}
             {isDoji ? (
               <line
-                x1={x + 1}
+                x1={bodyX}
                 y1={yScale(c.close)}
-                x2={x + bw - 1}
+                x2={bodyX + bodyWidth}
                 y2={yScale(c.close)}
                 stroke="#a1a1aa"
                 strokeWidth={1.5}
               />
             ) : (
               <rect
-                x={x}
+                x={bodyX}
                 y={bodyY}
-                width={bw}
+                width={bodyWidth}
                 height={bodyH}
                 rx={1}
-                fill={green ? '#10b981' : '#ef4444'}
+                fill={green ? '#34d399' : '#ef4444'}
               />
             )}
           </g>
