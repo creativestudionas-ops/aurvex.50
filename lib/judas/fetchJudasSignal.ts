@@ -7,12 +7,14 @@ import type {
   SignalGrade,
   JudasFactor,
   SessionDirection,
+  CandleWarning,
 } from '@/types/judas'
 import { getLivePrice, getCandles } from '@/lib/data/price'
 import type { Candle } from '@/lib/data/price'
 import { computeScore } from '@/lib/judas/grades'
 import type { ScoreInput } from '@/lib/judas/grades'
 import { mockSignal } from '@/lib/judas/mockSignal'
+import { detect4HWarnings } from '@/lib/judas/exhaustionDetector'
 
 // ---------------------------------------------------------------------------
 // Cache layer — holds last-known-good values for graceful degradation
@@ -508,6 +510,16 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
     const londonLow = sessionResult.sessions[1].low
     const smcResult = await fetchSMCLevels(spotResult.price, londonLow)
 
+    // Candle warnings — reuse 4H candles (already fetched inside fetchSMCLevels)
+    let warnings: CandleWarning[] = []
+    try {
+      const candles4h = await getCandles('4h', 200)
+      warnings = detect4HWarnings(candles4h, smcResult.levels, spotResult.price)
+    } catch (err) {
+      log('warnings', err)
+      warnings = []
+    }
+
     // Score — pass all assembled data
     const scoreResult = fetchScore({
       sessions: sessionResult.sessions,
@@ -549,6 +561,8 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
 
       tradeScenarios: mockSignal.tradeScenarios, // TODO: derive from live data
       catalysts: calendarResult.catalysts,
+
+      warnings,
 
       computedAt: new Date().toISOString(),
     }

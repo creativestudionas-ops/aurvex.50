@@ -99,6 +99,39 @@ export interface JudasSignal {
   // Catalysts
   catalysts: Catalyst[]
 
+  // Candle warnings
+  warnings: CandleWarning[]
+
   // Meta
   computedAt: string
+}
+
+// ---------------------------------------------------------------------------
+// Candle Warning System
+// ---------------------------------------------------------------------------
+export type ExhaustionType =
+  | 'wick_exhaustion'
+  | 'volume_climax'
+  | 'diminishing_range'
+  | 'momentum_divergence'
+
+export type RejectionType =
+  | 'pin_bar'
+  | 'ob_rejection'
+  | 'liquidity_sweep_reclaim'
+
+export type WarningSeverity = 'critical' | 'high' | 'medium' | 'info'
+
+export interface CandleWarning {
+  id: string                         // unique: `${type}_${candleTime}`
+  type: ExhaustionType | RejectionType
+  category: 'exhaustion' | 'rejection'
+  severity: WarningSeverity
+  direction: 'bullish' | 'bearish'   // direction the warning implies
+  candleTime: number                  // Unix timestamp of trigger candle
+  price: number                       // price level where signal fired
+  levelConfluence: string | null      // e.g. "Bullish OB @ $3,198" or null
+  title: string                       // short human label
+  note: string                        // full plain-English explanation
+  confirmed: boolean                  // true = closed candle, false = still forming
 }

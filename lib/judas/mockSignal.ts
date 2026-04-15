@@ -188,6 +188,49 @@ export const mockSignal: JudasSignal = {
     },
   ],
 
+  // Candle warnings
+  warnings: [
+    {
+      id: 'ob_rejection_1744588800_Bullish_OB_(1H)',
+      type: 'ob_rejection',
+      category: 'rejection',
+      severity: 'critical',
+      direction: 'bullish',
+      candleTime: 1744588800,
+      price: 4762.50,
+      levelConfluence: 'Bullish OB (1H) @ $4,752.33\u2013$4,768.33',
+      title: 'Order block rejection',
+      note: 'Price dipped into Bullish OB (1H) and closed above the zone \u2014 OB held as support.',
+      confirmed: true,
+    },
+    {
+      id: 'pin_bar_1744574400',
+      type: 'pin_bar',
+      category: 'rejection',
+      severity: 'high',
+      direction: 'bullish',
+      candleTime: 1744574400,
+      price: 4744.21,
+      levelConfluence: 'SSL Swept \u2014 London Low @ $4,744.21',
+      title: 'Pin bar rejection',
+      note: 'Long lower wick 4\u00d7 body on 4H \u2014 strong demand rejection near SSL.',
+      confirmed: true,
+    },
+    {
+      id: 'wick_exhaustion_1744560000',
+      type: 'wick_exhaustion',
+      category: 'exhaustion',
+      severity: 'medium',
+      direction: 'bearish',
+      candleTime: 1744560000,
+      price: 4817.86,
+      levelConfluence: null,
+      title: 'Wick exhaustion',
+      note: '2 of last 3 4H candles show upper wicks more than 2\u00d7 body \u2014 bearish momentum fading at highs.',
+      confirmed: true,
+    },
+  ],
+
   // Meta
   computedAt: new Date().toISOString(),
 }

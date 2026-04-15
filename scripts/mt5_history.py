@@ -35,7 +35,7 @@ if rates is None or len(rates) == 0:
 candles = []
 for r in rates:
     candles.append({
-        "time": str(datetime.datetime.utcfromtimestamp(r["time"])),
+        "time": datetime.datetime.fromtimestamp(r["time"], tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "open": float(r["open"]),
         "high": float(r["high"]),
         "low": float(r["low"]),
