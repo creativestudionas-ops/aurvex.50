@@ -15,6 +15,7 @@ import { computeScore } from '@/lib/judas/grades'
 import type { ScoreInput } from '@/lib/judas/grades'
 import { mockSignal } from '@/lib/judas/mockSignal'
 import { detect4HWarnings } from '@/lib/judas/exhaustionDetector'
+import { deriveTradeScenarios } from '@/lib/judas/tradeScenarios'
 
 // ---------------------------------------------------------------------------
 // Cache layer — holds last-known-good values for graceful degradation
@@ -559,7 +560,13 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
         stale: macroResult.stale || undefined,
       },
 
-      tradeScenarios: mockSignal.tradeScenarios, // TODO: derive from live data
+      tradeScenarios: deriveTradeScenarios(
+        spotResult.price,
+        sessionResult.sessions,
+        smcResult.levels,
+        sessionResult.judasPhase,
+        sessionResult.sessionBias,
+      ),
       catalysts: calendarResult.catalysts,
 
       warnings,
