@@ -231,6 +231,40 @@ export const mockSignal: JudasSignal = {
     },
   ],
 
+  // Entry engine
+  entry: {
+    direction: 'buy',
+    confidence: 'A++',
+    confidenceScore: 91,
+    entryZone: {
+      low: 4804.00,
+      high: 4812.00,
+      midpoint: 4808.00,
+      source: 'Bullish OB',
+    },
+    stopLoss: 4798.00,
+    stopNote: 'Below Bullish OB low $4,804.00',
+    targets: [
+      { label: 'TP1', price: 4841.00, rMultiple: 1.5, rationale: 'Prior session high' },
+      { label: 'TP2', price: 4852.00, rMultiple: 2.4, rationale: 'BSL $4,852' },
+      { label: 'TP3', price: 4878.00, rMultiple: 3.6, rationale: '3R extension' },
+    ],
+    riskReward: 2.4,
+    reasons: [
+      'Judas sweep confirmed \u2014 Post-sweep \u00b7 long bias',
+      'Entry zone: Bullish OB ($4,804.00\u2013$4,812.00)',
+      '4H rejection: OB rejection confirmed at $4,806.50',
+      'COT commercials at 68th percentile \u2014 smart money bullish',
+      'DXY falling (-0.33) \u2014 tailwind for gold longs',
+      'Signal grade A \u2014 solid setup',
+    ],
+    blockers: [
+      'COT data stale \u2014 confirm current week positioning',
+      'High-impact event pending: FOMC Meeting Minutes at 2026-04-15 18:00 UTC',
+    ],
+    computedAt: new Date().toISOString(),
+  },
+
   // Meta
   computedAt: new Date().toISOString(),
 }

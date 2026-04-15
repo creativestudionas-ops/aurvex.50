@@ -12,6 +12,7 @@ import type {
   FactorDirection,
 } from '@/types/judas'
 import ChartPanel from './chart/ChartPanel'
+import EntryPanel from './EntryPanel'
 import WarningPanel from './WarningPanel'
 
 // ---------------------------------------------------------------------------
@@ -501,6 +502,9 @@ export default function JudasSMCDashboard({ signal }: Props) {
 
       {/* Full-width chart panel */}
       <ChartPanel signal={signal} />
+
+      {/* Entry signal — primary action panel */}
+      <EntryPanel entry={signal.entry} />
 
       {/* Candle warning system */}
       <WarningPanel warnings={signal.warnings} />

@@ -102,6 +102,9 @@ export interface JudasSignal {
   // Candle warnings
   warnings: CandleWarning[]
 
+  // Entry engine
+  entry: EntrySignal
+
   // Meta
   computedAt: string
 }
@@ -134,4 +137,39 @@ export interface CandleWarning {
   title: string                       // short human label
   note: string                        // full plain-English explanation
   confirmed: boolean                  // true = closed candle, false = still forming
+}
+
+// ---------------------------------------------------------------------------
+// Entry Engine
+// ---------------------------------------------------------------------------
+export type EntryDirection = 'buy' | 'sell' | 'wait'
+
+export type EntryConfidence = 'A++' | 'A+' | 'A' | 'B' | 'wait'
+
+export interface TPLevel {
+  label: 'TP1' | 'TP2' | 'TP3'
+  price: number
+  rMultiple: number       // e.g. 1.5 = 1.5R
+  rationale: string       // e.g. "BSL @ $4,852"
+}
+
+export interface EntryZoneRange {
+  low: number             // bottom of entry zone
+  high: number            // top of entry zone
+  midpoint: number        // (low + high) / 2
+  source: string          // e.g. "Bullish OB" or "FVG midpoint"
+}
+
+export interface EntrySignal {
+  direction: EntryDirection
+  confidence: EntryConfidence
+  confidenceScore: number    // 0–100
+  entryZone: EntryZoneRange | null
+  stopLoss: number | null
+  stopNote: string
+  targets: TPLevel[]
+  riskReward: number | null  // ratio to TP2
+  reasons: string[]
+  blockers: string[]
+  computedAt: string
 }

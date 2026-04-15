@@ -8,6 +8,7 @@ import type {
   JudasFactor,
   SessionDirection,
   CandleWarning,
+  EntrySignal,
 } from '@/types/judas'
 import { getLivePrice, getCandles } from '@/lib/data/price'
 import type { Candle } from '@/lib/data/price'
@@ -16,6 +17,8 @@ import type { ScoreInput } from '@/lib/judas/grades'
 import { mockSignal } from '@/lib/judas/mockSignal'
 import { detect4HWarnings } from '@/lib/judas/exhaustionDetector'
 import { deriveTradeScenarios } from '@/lib/judas/tradeScenarios'
+import { computeEntrySignal, waitSignal } from '@/lib/judas/entryEngine'
+import { sendTelegramAlert } from '@/lib/telegram/sendAlert'
 
 // ---------------------------------------------------------------------------
 // Cache layer — holds last-known-good values for graceful degradation
@@ -511,10 +514,11 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
     const londonLow = sessionResult.sessions[1].low
     const smcResult = await fetchSMCLevels(spotResult.price, londonLow)
 
-    // Candle warnings — reuse 4H candles (already fetched inside fetchSMCLevels)
+    // Candle warnings — reuse 4H candles (also used for entry engine)
     let warnings: CandleWarning[] = []
+    let candles4h: Candle[] = []
     try {
-      const candles4h = await getCandles('4h', 200)
+      candles4h = await getCandles('4h', 200)
       warnings = detect4HWarnings(candles4h, smcResult.levels, spotResult.price)
     } catch (err) {
       log('warnings', err)
@@ -535,7 +539,8 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
     const sessionLabel: 'Asian' | 'London' | 'New York' =
       currentHour < 7 ? 'Asian' : currentHour < 12 ? 'London' : 'New York'
 
-    return {
+    // Assemble base signal (without entry — entry depends on the assembled data)
+    const baseSignal: Omit<JudasSignal, 'entry'> = {
       price: spotResult.price,
       priceChange: spotResult.priceChange,
       priceChangePct: spotResult.priceChangePct,
@@ -573,6 +578,20 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
 
       computedAt: new Date().toISOString(),
     }
+
+    // Compute entry signal
+    let entry: EntrySignal
+    try {
+      entry = computeEntrySignal(baseSignal, candles4h)
+    } catch (err) {
+      log('entryEngine', err)
+      entry = waitSignal('Entry engine unavailable')
+    }
+
+    // Send Telegram alert (fire-and-forget — never blocks page render)
+    sendTelegramAlert(entry).catch(() => {})
+
+    return { ...baseSignal, entry }
   } catch (err) {
     // Absolute fallback — should never reach here, but guarantees no throw
     console.error('[judas] critical failure — returning mockSignal:', err)

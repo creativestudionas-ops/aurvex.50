@@ -182,7 +182,7 @@ export default function D3CandleChart({
           chartWidth={innerW}
         />
         <CandleLayer candles={visibleCandles} xScale={xScale} yScale={yScale} />
-        <EntryZoneLayer zone={overlays.entryZone} yScale={yScale} chartWidth={innerW} />
+        <EntryZoneLayer zone={overlays.entryZone} yScale={yScale} chartWidth={innerW} entry={signal.entry} />
         <SweepAnnotationLayer
           annotation={signal.judasPhase.includes('Post-sweep') ? overlays.sweepAnnotation : null}
           xScale={xScale}
