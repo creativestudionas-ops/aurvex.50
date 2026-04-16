@@ -45,10 +45,13 @@ const directionConfig: Record<
 // Model badge colors
 // ---------------------------------------------------------------------------
 const modelStyle: Record<EntryModel, { border: string; bg: string; text: string; label: string }> = {
-  judas_sweep:   { border: '#B8972A', bg: 'rgba(184,151,42,0.12)',  text: '#fbbf24', label: 'Judas Sweep'   },
-  fvg_fill:      { border: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  text: '#60a5fa', label: 'FVG Fill'      },
-  cisd:          { border: '#8b5cf6', bg: 'rgba(139,92,246,0.10)',  text: '#a78bfa', label: 'CISD'          },
-  silver_bullet: { border: '#14b8a6', bg: 'rgba(20,184,166,0.10)', text: '#2dd4bf', label: 'Silver Bullet' },
+  judas_sweep:      { border: '#B8972A', bg: 'rgba(184,151,42,0.12)',  text: '#fbbf24', label: 'Judas Sweep'      },
+  fvg_fill:         { border: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  text: '#60a5fa', label: 'FVG Fill'         },
+  cisd:             { border: '#8b5cf6', bg: 'rgba(139,92,246,0.10)',  text: '#a78bfa', label: 'CISD'             },
+  silver_bullet:    { border: '#14b8a6', bg: 'rgba(20,184,166,0.10)', text: '#2dd4bf', label: 'Silver Bullet'    },
+  breaker_block:    { border: '#f97316', bg: 'rgba(249,115,22,0.10)',  text: '#fb923c', label: 'Breaker Block'    },
+  ote_fibonacci:    { border: '#ec4899', bg: 'rgba(236,72,153,0.10)',  text: '#f472b6', label: 'OTE Fibonacci'    },
+  propulsion_block: { border: '#84cc16', bg: 'rgba(132,204,22,0.10)', text: '#a3e635', label: 'Propulsion Block' },
 }
 
 // ---------------------------------------------------------------------------

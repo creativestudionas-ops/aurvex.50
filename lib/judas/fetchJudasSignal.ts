@@ -21,6 +21,9 @@ import { computeEntrySignal, waitSignal } from '@/lib/judas/entryEngine'
 import { computeFVGSignal } from '@/lib/judas/fvgSignal'
 import { computeCISDSignal } from '@/lib/judas/cisdSignal'
 import { computeSilverBulletSignal } from '@/lib/judas/silverBulletSignal'
+import { computeBreakerSignal } from '@/lib/judas/breakerSignal'
+import { computeOTESignal } from '@/lib/judas/oteSignal'
+import { computePropulsionSignal } from '@/lib/judas/propulsionSignal'
 import { sendTelegramAlert } from '@/lib/telegram/sendAlert'
 import type { Candle as ChartCandle } from '@/components/judas/chart/types/chart'
 
@@ -623,6 +626,15 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
 
     try { allEntries.push(computeSilverBulletSignal(baseSignal as JudasSignal, chartCandles1h)) }
     catch (e) { log('silver_bullet', e) }
+
+    try { allEntries.push(computeBreakerSignal(baseSignal as JudasSignal, chartCandles1h, chartCandles4h)) }
+    catch (e) { log('breaker_block', e) }
+
+    try { allEntries.push(computeOTESignal(baseSignal as JudasSignal, chartCandles1h, chartCandles4h)) }
+    catch (e) { log('ote_fibonacci', e) }
+
+    try { allEntries.push(computePropulsionSignal(baseSignal as JudasSignal, chartCandles1h, chartCandles4h)) }
+    catch (e) { log('propulsion_block', e) }
 
     // Sort descending by confidenceScore — active signals first
     const entries: EntrySignal[] = allEntries

@@ -166,7 +166,14 @@ export interface EntryZoneRange {
   source: string          // e.g. "Bullish OB" or "FVG midpoint"
 }
 
-export type EntryModel = 'judas_sweep' | 'fvg_fill' | 'cisd' | 'silver_bullet'
+export type EntryModel =
+  | 'judas_sweep'
+  | 'fvg_fill'
+  | 'cisd'
+  | 'silver_bullet'
+  | 'breaker_block'
+  | 'ote_fibonacci'
+  | 'propulsion_block'
 
 export interface EntrySignal {
   // ── Model identifier ───────────────────────────────────────────
