@@ -137,6 +137,12 @@ export interface CandleWarning {
   title: string                       // short human label
   note: string                        // full plain-English explanation
   confirmed: boolean                  // true = closed candle, false = still forming
+
+  // ── Timestamp patch v1.1 ───────────────────────
+  formattedTime: string               // e.g. "Apr 16 · 08:00 UTC"
+  timeAgo: string                     // e.g. "2h ago" — computed at detection time
+  isLatest: boolean                   // true on the warning with the highest candleTime
+  // ───────────────────────────────────────────────
 }
 
 // ---------------------------------------------------------------------------

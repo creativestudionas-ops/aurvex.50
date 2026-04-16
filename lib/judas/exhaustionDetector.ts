@@ -12,6 +12,38 @@
 import type { Candle } from '@/lib/data/price'
 import type { SMCLevel, CandleWarning, WarningSeverity } from '@/types/judas'
 
+/** Warning without timestamp fields — stamped in final step of detect4HWarnings */
+type RawWarning = Omit<CandleWarning, 'formattedTime' | 'timeAgo' | 'isLatest'>
+
+// ---------------------------------------------------------------------------
+// Timestamp helpers (Patch 1.1)
+// ---------------------------------------------------------------------------
+
+function formatCandleTime(unixSeconds: number): string {
+  const d = new Date(unixSeconds * 1000)
+  const months = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ]
+  const mon  = months[d.getUTCMonth()]
+  const day  = String(d.getUTCDate()).padStart(2, '0')
+  const hour = String(d.getUTCHours()).padStart(2, '0')
+  const min  = String(d.getUTCMinutes()).padStart(2, '0')
+  return `${mon} ${day} · ${hour}:${min} UTC`
+}
+
+function getTimeAgo(unixSeconds: number): string {
+  const diffMs      = Date.now() - unixSeconds * 1000
+  const diffMinutes = Math.floor(diffMs / 60_000)
+  const diffHours   = Math.floor(diffMinutes / 60)
+  const diffDays    = Math.floor(diffHours / 24)
+
+  if (diffMinutes < 5)   return 'just now'
+  if (diffMinutes < 60)  return `${diffMinutes}m ago`
+  if (diffHours   < 24)  return `${diffHours}h ago`
+  return `${diffDays}d ago`
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -68,8 +100,8 @@ function upgradeOnConfluence(
 function detectWickExhaustion(
   closed: Candle[],
   levels: SMCLevel[],
-): CandleWarning[] {
-  const warnings: CandleWarning[] = []
+): RawWarning[] {
+  const warnings: RawWarning[] = []
   const last3 = closed.slice(-3)
   if (last3.length < 3) return warnings
 
@@ -132,8 +164,8 @@ function detectWickExhaustion(
 function detectDiminishingRange(
   closed: Candle[],
   levels: SMCLevel[],
-): CandleWarning[] {
-  const warnings: CandleWarning[] = []
+): RawWarning[] {
+  const warnings: RawWarning[] = []
   const last6 = closed.slice(-6)
   if (last6.length < 3) return warnings
 
@@ -208,8 +240,8 @@ function detectDiminishingRange(
 function detectPinBar(
   closed: Candle[],
   levels: SMCLevel[],
-): CandleWarning[] {
-  const warnings: CandleWarning[] = []
+): RawWarning[] {
+  const warnings: RawWarning[] = []
   if (closed.length === 0) return warnings
 
   const candle = closed[closed.length - 1]
@@ -273,8 +305,8 @@ function detectOBRejection(
   closed: Candle[],
   formingCandle: Candle | null,
   levels: SMCLevel[],
-): CandleWarning[] {
-  const warnings: CandleWarning[] = []
+): RawWarning[] {
+  const warnings: RawWarning[] = []
   const last5 = closed.slice(-5)
   if (last5.length < 2) return warnings
 
@@ -345,8 +377,8 @@ function detectLiquiditySweepReclaim(
   closed: Candle[],
   formingCandle: Candle | null,
   levels: SMCLevel[],
-): CandleWarning[] {
-  const warnings: CandleWarning[] = []
+): RawWarning[] {
+  const warnings: RawWarning[] = []
   const last5 = closed.slice(-5)
   if (last5.length < 1) return warnings
 
@@ -476,7 +508,7 @@ export function detect4HWarnings(
     const forming = candles[candles.length - 1]
 
     // Collect all warnings from 5 signal detectors
-    let warnings: CandleWarning[] = [
+    let rawWarnings: RawWarning[] = [
       ...detectWickExhaustion(closed, levels),
       ...detectDiminishingRange(closed, levels),
       ...detectPinBar(closed, levels),
@@ -485,7 +517,7 @@ export function detect4HWarnings(
     ]
 
     // 1. Confluence upgrade — check every warning without a levelConfluence
-    warnings = warnings.map((w) => {
+    rawWarnings = rawWarnings.map((w) => {
       const level = nearLevel(w.price, levels, 15)
       if (level && !w.levelConfluence) {
         return {
@@ -498,11 +530,11 @@ export function detect4HWarnings(
     })
 
     // 2. Deduplicate by id
-    const seen = new Map<string, CandleWarning>()
-    for (const w of warnings) {
+    const seen = new Map<string, RawWarning>()
+    for (const w of rawWarnings) {
       seen.set(w.id, w)
     }
-    warnings = Array.from(seen.values())
+    rawWarnings = Array.from(seen.values())
 
     // 3. Sort by severity: critical -> high -> medium -> info
     const order: Record<WarningSeverity, number> = {
@@ -511,9 +543,21 @@ export function detect4HWarnings(
       medium: 2,
       info: 3,
     }
-    warnings.sort((a, b) => order[a.severity] - order[b.severity])
+    rawWarnings.sort((a, b) => order[a.severity] - order[b.severity])
 
-    // 4. Cap at 8 warnings
+    // 4. Stamp timestamps and mark latest (Patch 1.1)
+    const latestTime = rawWarnings.reduce(
+      (max, w) => (w.candleTime > max ? w.candleTime : max),
+      0
+    )
+    const warnings: CandleWarning[] = rawWarnings.map(w => ({
+      ...w,
+      formattedTime: formatCandleTime(w.candleTime),
+      timeAgo:       getTimeAgo(w.candleTime),
+      isLatest:      w.candleTime === latestTime,
+    }))
+
+    // 5. Cap at 8 warnings
     return warnings.slice(0, 8)
   } catch {
     return []

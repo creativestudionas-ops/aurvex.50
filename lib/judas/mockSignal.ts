@@ -202,6 +202,9 @@ export const mockSignal: JudasSignal = {
       title: 'Order block rejection',
       note: 'Price dipped into Bullish OB (1H) and closed above the zone \u2014 OB held as support.',
       confirmed: true,
+      formattedTime: 'Apr 16 \u00b7 08:00 UTC',
+      timeAgo:       '2h ago',
+      isLatest:      true,
     },
     {
       id: 'pin_bar_1744574400',
@@ -215,6 +218,9 @@ export const mockSignal: JudasSignal = {
       title: 'Pin bar rejection',
       note: 'Long lower wick 4\u00d7 body on 4H \u2014 strong demand rejection near SSL.',
       confirmed: true,
+      formattedTime: 'Apr 16 \u00b7 04:00 UTC',
+      timeAgo:       '6h ago',
+      isLatest:      false,
     },
     {
       id: 'wick_exhaustion_1744560000',
@@ -228,6 +234,9 @@ export const mockSignal: JudasSignal = {
       title: 'Wick exhaustion',
       note: '2 of last 3 4H candles show upper wicks more than 2\u00d7 body \u2014 bearish momentum fading at highs.',
       confirmed: true,
+      formattedTime: 'Apr 15 \u00b7 20:00 UTC',
+      timeAgo:       '14h ago',
+      isLatest:      false,
     },
   ],
 
