@@ -18,7 +18,25 @@ import { mockSignal } from '@/lib/judas/mockSignal'
 import { detect4HWarnings } from '@/lib/judas/exhaustionDetector'
 import { deriveTradeScenarios } from '@/lib/judas/tradeScenarios'
 import { computeEntrySignal, waitSignal } from '@/lib/judas/entryEngine'
+import { computeFVGSignal } from '@/lib/judas/fvgSignal'
+import { computeCISDSignal } from '@/lib/judas/cisdSignal'
+import { computeSilverBulletSignal } from '@/lib/judas/silverBulletSignal'
 import { sendTelegramAlert } from '@/lib/telegram/sendAlert'
+import type { Candle as ChartCandle } from '@/components/judas/chart/types/chart'
+
+// ---------------------------------------------------------------------------
+// Bridge: convert price Candle (datetime string) → chart Candle (unix time)
+// ---------------------------------------------------------------------------
+function toChartCandle(c: Candle): ChartCandle {
+  return {
+    time: Math.floor(new Date(c.datetime).getTime() / 1000),
+    open: c.open,
+    high: c.high,
+    low: c.low,
+    close: c.close,
+    volume: c.volume,
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Cache layer — holds last-known-good values for graceful degradation
@@ -539,8 +557,16 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
     const sessionLabel: 'Asian' | 'London' | 'New York' =
       currentHour < 7 ? 'Asian' : currentHour < 12 ? 'London' : 'New York'
 
-    // Assemble base signal (without entry — entry depends on the assembled data)
-    const baseSignal: Omit<JudasSignal, 'entry'> = {
+    // Fetch 1H candles for new signal models (cached — same data as fetchSessions)
+    let candles1h: Candle[] = []
+    try {
+      candles1h = await getCandles('1h', 200)
+    } catch (err) {
+      log('candles1h', err)
+    }
+
+    // Assemble base signal (without entries — entries depend on the assembled data)
+    const baseSignal: Omit<JudasSignal, 'entries'> = {
       price: spotResult.price,
       priceChange: spotResult.priceChange,
       priceChangePct: spotResult.priceChangePct,
@@ -579,19 +605,36 @@ export async function fetchJudasSignal(): Promise<JudasSignal> {
       computedAt: new Date().toISOString(),
     }
 
-    // Compute entry signal
-    let entry: EntrySignal
-    try {
-      entry = computeEntrySignal(baseSignal, candles4h)
-    } catch (err) {
-      log('entryEngine', err)
-      entry = waitSignal('Entry engine unavailable')
+    // Convert candles for new signal engines (price Candle → chart Candle)
+    const chartCandles1h = candles1h.map(toChartCandle)
+    const chartCandles4h = candles4h.map(toChartCandle)
+
+    // Compute all entry signals — each model wrapped in try/catch
+    const allEntries: EntrySignal[] = []
+
+    try { allEntries.push(computeEntrySignal(baseSignal, candles4h)) }
+    catch (e) { log('judas_sweep', e) }
+
+    try { allEntries.push(computeFVGSignal(baseSignal as JudasSignal, chartCandles1h, chartCandles4h)) }
+    catch (e) { log('fvg_fill', e) }
+
+    try { allEntries.push(computeCISDSignal(baseSignal as JudasSignal, chartCandles1h, chartCandles4h)) }
+    catch (e) { log('cisd', e) }
+
+    try { allEntries.push(computeSilverBulletSignal(baseSignal as JudasSignal, chartCandles1h)) }
+    catch (e) { log('silver_bullet', e) }
+
+    // Sort descending by confidenceScore — active signals first
+    const entries: EntrySignal[] = allEntries
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+
+    // Send Telegram alert for best active entry (fire-and-forget)
+    const bestActive = entries.find(e => e.direction !== 'wait')
+    if (bestActive) {
+      sendTelegramAlert(bestActive).catch(() => {})
     }
 
-    // Send Telegram alert (fire-and-forget — never blocks page render)
-    sendTelegramAlert(entry).catch(() => {})
-
-    return { ...baseSignal, entry }
+    return { ...baseSignal, entries }
   } catch (err) {
     // Absolute fallback — should never reach here, but guarantees no throw
     console.error('[judas] critical failure — returning mockSignal:', err)

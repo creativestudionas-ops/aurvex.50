@@ -1,7 +1,7 @@
 /**
  * Judas Entry Signal Computation Engine
  *
- * Takes a fully-assembled JudasSignal (minus the `entry` field) and produces
+ * Takes a fully-assembled JudasSignal (minus the `entries` field) and produces
  * an EntrySignal telling the trader to BUY, SELL, or WAIT.
  *
  * Designed for XAU/USD (gold) on the Aurvex platform.
@@ -22,13 +22,15 @@ import type {
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
-type EntryInput = Omit<JudasSignal, 'entry'>
+type EntryInput = Omit<JudasSignal, 'entries'>
 
 // ---------------------------------------------------------------------------
 // Wait helper \u2014 exported so fetchJudasSignal can use it as a fallback
 // ---------------------------------------------------------------------------
 export function waitSignal(reason: string): EntrySignal {
   return {
+    model: 'judas_sweep',
+    modelLabel: 'Judas Sweep',
     direction: 'wait',
     confidence: 'wait',
     confidenceScore: 0,
@@ -666,6 +668,8 @@ export function computeEntrySignal(
     // If confidence maps to 'wait', override direction
     if (confidence.grade === 'wait') {
       return {
+        model: 'judas_sweep',
+        modelLabel: 'Judas Sweep',
         direction: 'wait',
         confidence: 'wait',
         confidenceScore: confidence.score,
@@ -690,6 +694,8 @@ export function computeEntrySignal(
     // Final signal
     // =====================================================================
     return {
+      model: 'judas_sweep',
+      modelLabel: 'Judas Sweep',
       direction,
       confidence: confidence.grade,
       confidenceScore: confidence.score,

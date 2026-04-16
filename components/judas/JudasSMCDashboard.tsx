@@ -504,7 +504,7 @@ export default function JudasSMCDashboard({ signal }: Props) {
       <ChartPanel signal={signal} />
 
       {/* Entry signal — primary action panel */}
-      <EntryPanel entry={signal.entry} />
+      <EntryPanel entries={signal.entries} />
 
       {/* Candle warning system */}
       <WarningPanel warnings={signal.warnings} />

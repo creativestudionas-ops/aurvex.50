@@ -36,6 +36,7 @@ function buildMessage(entry: EntrySignal): string {
 
   // Header
   lines.push(`${emoji} *${label} SIGNAL \u2014 XAU/USD*`)
+  lines.push(`Model: *${entry.modelLabel}*`)
   lines.push(`Confidence: *${entry.confidence}* (${entry.confidenceScore}/100)`)
 
   // Entry zone

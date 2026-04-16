@@ -4,6 +4,7 @@ import type {
   EntrySignal,
   EntryDirection,
   EntryConfidence,
+  EntryModel,
   TPLevel,
 } from '@/types/judas'
 
@@ -41,14 +42,24 @@ const directionConfig: Record<
 }
 
 // ---------------------------------------------------------------------------
+// Model badge colors
+// ---------------------------------------------------------------------------
+const modelStyle: Record<EntryModel, { border: string; bg: string; text: string; label: string }> = {
+  judas_sweep:   { border: '#B8972A', bg: 'rgba(184,151,42,0.12)',  text: '#fbbf24', label: 'Judas Sweep'   },
+  fvg_fill:      { border: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  text: '#60a5fa', label: 'FVG Fill'      },
+  cisd:          { border: '#8b5cf6', bg: 'rgba(139,92,246,0.10)',  text: '#a78bfa', label: 'CISD'          },
+  silver_bullet: { border: '#14b8a6', bg: 'rgba(20,184,166,0.10)', text: '#2dd4bf', label: 'Silver Bullet' },
+}
+
+// ---------------------------------------------------------------------------
 // Confidence color
 // ---------------------------------------------------------------------------
 const confidenceColor: Record<EntryConfidence, string> = {
-  'A++': 'text-emerald-400',
-  'A+': 'text-emerald-500',
-  A: 'text-yellow-400',
-  B: 'text-orange-400',
-  wait: 'text-zinc-500',
+  'A++': '#34d399',
+  'A+':  '#10b981',
+  A:     '#eab308',
+  B:     '#f97316',
+  wait:  '#71717a',
 }
 
 // ---------------------------------------------------------------------------
@@ -68,60 +79,300 @@ function barColor(score: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// Model badge
+// ---------------------------------------------------------------------------
+function ModelBadge({ model }: { model: EntryModel }) {
+  const s = modelStyle[model]
+  return (
+    <span style={{
+      fontFamily: 'var(--font-geist-mono), monospace',
+      fontSize: 10,
+      fontWeight: 500,
+      padding: '2px 8px',
+      borderRadius: 4,
+      border: `1px solid ${s.border}`,
+      background: s.bg,
+      color: s.text,
+      whiteSpace: 'nowrap',
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // TP row
 // ---------------------------------------------------------------------------
-function TPRow({
-  tp,
-  direction,
-}: {
-  tp: TPLevel
-  direction: EntryDirection
-}) {
+function TPRow({ tp, direction }: { tp: TPLevel; direction: EntryDirection }) {
   const isTP2 = tp.label === 'TP2'
-  const rColor = direction === 'sell' ? 'text-red-500' : 'text-emerald-500'
+  const rColor = direction === 'sell' ? '#f87171' : '#34d399'
 
   return (
     <div className="flex items-baseline gap-3">
-      {/* Label */}
-      <span
-        className="text-zinc-500 shrink-0"
-        style={{
-          fontFamily: 'var(--font-geist-mono), monospace',
-          fontSize: '11px',
-        }}
-      >
+      <span style={{
+        fontFamily: 'var(--font-geist-mono), monospace',
+        fontSize: 11,
+        color: '#71717a',
+        flexShrink: 0,
+      }}>
         {tp.label}
       </span>
-
-      {/* Price */}
-      <span
-        className="text-zinc-100"
-        style={{
-          fontFamily: 'var(--font-geist-mono), monospace',
-          fontSize: isTP2 ? '14px' : '13px',
-          fontWeight: isTP2 ? 500 : 400,
-        }}
-      >
+      <span style={{
+        fontFamily: 'var(--font-geist-mono), monospace',
+        fontSize: isTP2 ? 14 : 13,
+        fontWeight: isTP2 ? 500 : 400,
+        color: '#f4f4f5',
+      }}>
         ${formatPrice(tp.price)}
       </span>
-
-      {/* R-multiple */}
-      <span
-        className={rColor}
-        style={{
-          fontFamily: 'var(--font-geist-mono), monospace',
-          fontSize: '11px',
-        }}
-      >
+      <span style={{
+        fontFamily: 'var(--font-geist-mono), monospace',
+        fontSize: 11,
+        color: rColor,
+      }}>
         +{tp.rMultiple.toFixed(1)}R
       </span>
-
-      {/* Rationale */}
-      <span
-        className="text-zinc-500 italic truncate"
-        style={{ fontSize: '11px' }}
-      >
+      <span style={{
+        fontSize: 11,
+        color: '#71717a',
+        fontStyle: 'italic',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
         {tp.rationale}
+      </span>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Signal card — full or compact
+// ---------------------------------------------------------------------------
+function SignalCard({
+  entry,
+  pinned = false,
+}: {
+  entry: EntrySignal
+  pinned?: boolean
+}) {
+  const dir = directionConfig[entry.direction]
+  const isWait = entry.direction === 'wait'
+  const ms = modelStyle[entry.model]
+
+  return (
+    <div
+      style={{
+        borderRadius: 8,
+        border: `1px solid ${isWait ? '#3f3f46' : ms.border}`,
+        background: isWait ? '#18181b' : ms.bg,
+        padding: pinned ? 16 : 14,
+        boxShadow: !isWait ? `0 0 0 1px ${ms.border}33` : undefined,
+      }}
+    >
+      {/* Header — model badge + direction + confidence */}
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <ModelBadge model={entry.model} />
+          <span style={{
+            fontFamily: 'var(--font-geist-mono), monospace',
+            fontSize: pinned ? 16 : 13,
+            fontWeight: 700,
+            color: isWait ? '#71717a' : (entry.direction === 'buy' ? '#34d399' : '#f87171'),
+          }}>
+            {dir.arrow} {dir.label}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span style={{
+            fontFamily: 'var(--font-geist-mono), monospace',
+            fontSize: 12,
+            fontWeight: 600,
+            color: confidenceColor[entry.confidence],
+          }}>
+            {entry.confidence}
+          </span>
+          <span style={{
+            fontFamily: 'var(--font-geist-mono), monospace',
+            fontSize: 11,
+            color: '#a1a1aa',
+          }}>
+            {entry.confidenceScore}/100
+          </span>
+        </div>
+      </div>
+
+      {/* Confidence bar */}
+      <div style={{
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#27272a',
+        marginBottom: pinned ? 14 : 10,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          borderRadius: 2,
+          width: `${entry.confidenceScore}%`,
+          backgroundColor: barColor(entry.confidenceScore),
+          transition: 'width 600ms ease-out',
+        }} />
+      </div>
+
+      {/* WAIT state */}
+      {isWait && (
+        <div style={{
+          fontFamily: 'var(--font-geist-mono), monospace',
+          fontSize: 11,
+          color: '#71717a',
+        }}>
+          {entry.blockers[0] ?? 'Waiting for setup'}
+        </div>
+      )}
+
+      {/* Active state */}
+      {!isWait && (
+        <>
+          {/* Entry zone + SL + TPs + R:R */}
+          <div className="space-y-2">
+            {/* Entry zone */}
+            {entry.entryZone && (
+              <div>
+                <span className="font-[Cormorant]" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a' }}>
+                  Entry Zone
+                </span>
+                <p style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 13, color: '#f4f4f5' }}>
+                  ${formatPrice(entry.entryZone.low)} &ndash; ${formatPrice(entry.entryZone.high)}
+                </p>
+                <p style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 11, color: '#71717a' }}>
+                  mid ${formatPrice(entry.entryZone.midpoint)} &middot; {entry.entryZone.source}
+                </p>
+              </div>
+            )}
+
+            {/* Stop loss */}
+            {entry.stopLoss !== null && (
+              <div>
+                <span className="font-[Cormorant]" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a' }}>
+                  Stop Loss
+                </span>
+                <p>
+                  <span style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 13, color: '#f87171' }}>
+                    ${formatPrice(entry.stopLoss)}
+                  </span>
+                  {entry.stopNote && (
+                    <span style={{ fontSize: 11, color: '#71717a', fontStyle: 'italic', marginLeft: 8 }}>
+                      {entry.stopNote}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* TP levels */}
+            {entry.targets.length > 0 && (
+              <div>
+                <span className="font-[Cormorant]" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a' }}>
+                  Targets
+                </span>
+                <div className="space-y-1 mt-0.5">
+                  {entry.targets.map((tp) => (
+                    <TPRow key={tp.label} tp={tp} direction={entry.direction} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Risk:Reward */}
+            {entry.riskReward !== null && (
+              <div>
+                <span className="font-[Cormorant]" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a' }}>
+                  Risk : Reward
+                </span>
+                <p style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 13, color: '#f4f4f5' }}>
+                  1 : {entry.riskReward.toFixed(1)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Reasons — only on pinned card */}
+          {pinned && entry.reasons.length > 0 && (
+            <div style={{ borderTop: '1px solid rgba(63,63,70,0.5)', paddingTop: 12, marginTop: 12 }}>
+              <h3 className="font-[Cormorant]" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', marginBottom: 8 }}>
+                Reasons
+              </h3>
+              <ul className="space-y-1">
+                {entry.reasons.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span style={{ color: '#34d399', flexShrink: 0, marginTop: 1 }}>&#10003;</span>
+                    <span style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 12, color: '#d4d4d8' }}>
+                      {r}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Blockers */}
+          {entry.blockers.length > 0 && (
+            <div style={{ borderTop: '1px solid rgba(63,63,70,0.5)', paddingTop: 12, marginTop: pinned ? 12 : 8 }}>
+              <h3 className="font-[Cormorant]" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', marginBottom: 8 }}>
+                {pinned ? 'Blockers' : 'Watch'}
+              </h3>
+              <ul className="space-y-1">
+                {entry.blockers.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span style={{ color: '#fbbf24', flexShrink: 0, marginTop: 1 }}>&#9888;</span>
+                    <span style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: 12, color: '#a1a1aa' }}>
+                      {b}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Wait row — collapsed single-line for wait signals
+// ---------------------------------------------------------------------------
+function WaitRow({ entry }: { entry: EntrySignal }) {
+  const ms = modelStyle[entry.model]
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      padding: '8px 12px',
+      borderRadius: 6,
+      border: '1px solid #27272a',
+      background: '#18181b',
+    }}>
+      <ModelBadge model={entry.model} />
+      <span style={{
+        fontFamily: 'var(--font-geist-mono), monospace',
+        fontSize: 11,
+        color: '#52525b',
+      }}>
+        WAIT
+      </span>
+      <span style={{
+        fontSize: 11,
+        color: '#52525b',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        flex: 1,
+      }}>
+        {entry.blockers[0] ?? 'Waiting for setup'}
       </span>
     </div>
   )
@@ -131,267 +382,76 @@ function TPRow({
 // Panel
 // ---------------------------------------------------------------------------
 interface Props {
-  entry: EntrySignal
+  entries: EntrySignal[]
 }
 
-export default function EntryPanel({ entry }: Props) {
-  const dir = directionConfig[entry.direction]
-  const isWait = entry.direction === 'wait'
+export default function EntryPanel({ entries }: Props) {
+  if (!entries || entries.length === 0) return null
+
+  // Split into active and waiting
+  const active = entries.filter(e => e.direction !== 'wait')
+  const waiting = entries.filter(e => e.direction === 'wait')
+
+  // Pinned = highest confidence active signal
+  const pinned = active[0] ?? null
+  const rest = active.slice(1)
+
+  const activeCount = active.length
+  const waitCount = waiting.length
 
   return (
     <div className="mb-6">
-      <div
-        className={`rounded-lg border ${dir.border} ${dir.bg} ${dir.glow} p-4`}
-      >
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-[Cormorant] text-sm uppercase tracking-wider text-zinc-500">
-            Optimal Entry
-          </h2>
-
-          <div className="flex items-center gap-2">
-            <span
-              className={`font-[Geist_Mono] text-xs font-semibold ${confidenceColor[entry.confidence]}`}
-            >
-              {entry.confidence}
-            </span>
-            <span className="text-zinc-600 text-[10px]">&middot;</span>
-            <span className="font-[Geist_Mono] text-[11px] text-zinc-400">
-              confidence{' '}
-              <span className="text-zinc-200">{entry.confidenceScore}</span>
-              /100
-            </span>
-          </div>
-        </div>
-
-        {/* ── Confidence bar ─────────────────────────────────────── */}
-        <div
-          className="rounded-full mb-4 overflow-hidden"
-          style={{ height: '4px', backgroundColor: '#27272a' }}
-        >
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${entry.confidenceScore}%`,
-              backgroundColor: barColor(entry.confidenceScore),
-              transition: 'width 600ms ease-out',
-            }}
-          />
-        </div>
-
-        {/* ── WAIT state ─────────────────────────────────────────── */}
-        {isWait && (
-          <>
-            {/* Direction badge */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className={`text-2xl ${dir.text}`}>{dir.arrow}</span>
-              <span
-                className={`font-[Geist_Mono] text-lg font-bold ${dir.text}`}
-              >
-                {dir.label}
-              </span>
-            </div>
-
-            {/* Why waiting */}
-            <div className="border-t border-zinc-800/50 pt-3">
-              <h3 className="font-[Cormorant] text-xs uppercase tracking-wider text-zinc-500 mb-2">
-                Why Waiting
-              </h3>
-              <ul className="space-y-1">
-                {entry.blockers.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-amber-400 shrink-0 mt-px">
-                      &#9888;
-                    </span>
-                    <span
-                      className="text-zinc-400"
-                      style={{
-                        fontFamily: 'var(--font-geist-mono), monospace',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {b}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-
-        {/* ── BUY / SELL state ───────────────────────────────────── */}
-        {!isWait && (
-          <>
-            {/* Direction + data grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 mb-3">
-              {/* Left — arrow + label */}
-              <div className="flex flex-col items-center justify-center gap-1">
-                <span className={`text-5xl leading-none ${dir.text}`}>
-                  {dir.arrow}
-                </span>
-                <span
-                  className={`font-[Geist_Mono] text-xl font-bold tracking-wide ${dir.text}`}
-                >
-                  {dir.label}
-                </span>
-                <span className="font-[Geist_Mono] text-[11px] text-zinc-500">
-                  XAU/USD
-                </span>
-              </div>
-
-              {/* Right — entry zone, SL, TPs, R:R */}
-              <div className="space-y-2">
-                {/* Entry zone */}
-                {entry.entryZone && (
-                  <div>
-                    <span className="font-[Cormorant] text-[10px] uppercase tracking-wider text-zinc-500">
-                      Entry Zone
-                    </span>
-                    <p
-                      className="text-zinc-100"
-                      style={{
-                        fontFamily: 'var(--font-geist-mono), monospace',
-                        fontSize: '13px',
-                      }}
-                    >
-                      ${formatPrice(entry.entryZone.low)} &ndash; $
-                      {formatPrice(entry.entryZone.high)}
-                    </p>
-                    <p
-                      className="text-zinc-500"
-                      style={{
-                        fontFamily: 'var(--font-geist-mono), monospace',
-                        fontSize: '11px',
-                      }}
-                    >
-                      mid ${formatPrice(entry.entryZone.midpoint)} &middot;{' '}
-                      {entry.entryZone.source}
-                    </p>
-                  </div>
-                )}
-
-                {/* Stop loss */}
-                {entry.stopLoss !== null && (
-                  <div>
-                    <span className="font-[Cormorant] text-[10px] uppercase tracking-wider text-zinc-500">
-                      Stop Loss
-                    </span>
-                    <p>
-                      <span
-                        className="text-red-400"
-                        style={{
-                          fontFamily: 'var(--font-geist-mono), monospace',
-                          fontSize: '13px',
-                        }}
-                      >
-                        ${formatPrice(entry.stopLoss)}
-                      </span>
-                      {entry.stopNote && (
-                        <span
-                          className="text-zinc-500 italic ml-2"
-                          style={{ fontSize: '11px' }}
-                        >
-                          {entry.stopNote}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                )}
-
-                {/* TP levels */}
-                {entry.targets.length > 0 && (
-                  <div>
-                    <span className="font-[Cormorant] text-[10px] uppercase tracking-wider text-zinc-500">
-                      Targets
-                    </span>
-                    <div className="space-y-1 mt-0.5">
-                      {entry.targets.map((tp) => (
-                        <TPRow
-                          key={tp.label}
-                          tp={tp}
-                          direction={entry.direction}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Risk:Reward */}
-                {entry.riskReward !== null && (
-                  <div>
-                    <span className="font-[Cormorant] text-[10px] uppercase tracking-wider text-zinc-500">
-                      Risk : Reward
-                    </span>
-                    <p
-                      className="text-zinc-100"
-                      style={{
-                        fontFamily: 'var(--font-geist-mono), monospace',
-                        fontSize: '13px',
-                      }}
-                    >
-                      1 : {entry.riskReward.toFixed(1)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── Reasons ──────────────────────────────────────────── */}
-            {entry.reasons.length > 0 && (
-              <div className="border-t border-zinc-800/50 pt-3">
-                <h3 className="font-[Cormorant] text-xs uppercase tracking-wider text-zinc-500 mb-2">
-                  Reasons
-                </h3>
-                <ul className="space-y-1">
-                  {entry.reasons.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-emerald-400 shrink-0 mt-px">
-                        &#10003;
-                      </span>
-                      <span
-                        className="text-zinc-300"
-                        style={{
-                          fontFamily: 'var(--font-geist-mono), monospace',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {r}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* ── Blockers ─────────────────────────────────────────── */}
-            {entry.blockers.length > 0 && (
-              <div className="border-t border-zinc-800/50 pt-3 mt-3">
-                <h3 className="font-[Cormorant] text-xs uppercase tracking-wider text-zinc-500 mb-2">
-                  Blockers
-                </h3>
-                <ul className="space-y-1">
-                  {entry.blockers.map((b, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-amber-400 shrink-0 mt-px">
-                        &#9888;
-                      </span>
-                      <span
-                        className="text-zinc-400"
-                        style={{
-                          fontFamily: 'var(--font-geist-mono), monospace',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {b}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h2 className="font-[Cormorant] text-sm uppercase tracking-wider text-zinc-500">
+          Active Signals
+        </h2>
+        <span style={{
+          fontFamily: 'var(--font-geist-mono), monospace',
+          fontSize: 11,
+          color: '#71717a',
+        }}>
+          {activeCount} active &middot; {waitCount} wait
+        </span>
       </div>
+
+      {/* Pinned card — full width */}
+      {pinned && (
+        <div className="mb-3">
+          <SignalCard entry={pinned} pinned />
+        </div>
+      )}
+
+      {/* Remaining active signals — 3-column grid */}
+      {rest.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          {rest.map(e => (
+            <SignalCard key={e.model} entry={e} />
+          ))}
+        </div>
+      )}
+
+      {/* Wait signals — collapsed rows */}
+      {waiting.length > 0 && (
+        <div className="space-y-2">
+          {waiting.map(e => (
+            <WaitRow key={e.model} entry={e} />
+          ))}
+        </div>
+      )}
+
+      {/* All-wait fallback — when no active signals exist */}
+      {!pinned && waiting.length > 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '20px 0 8px',
+          fontFamily: 'var(--font-geist-mono), monospace',
+          fontSize: 11,
+          color: '#52525b',
+        }}>
+          No active entry signals &mdash; all models watching
+        </div>
+      )}
     </div>
   )
 }

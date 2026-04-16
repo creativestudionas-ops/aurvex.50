@@ -38,8 +38,25 @@ const ZONE_STYLES: Record<string, {
   },
 }
 
+// ---------------------------------------------------------------------------
+// Silver Bullet window definitions (UTC hours)
+// ---------------------------------------------------------------------------
+const SILVER_BULLET_WINDOWS_UTC = [
+  { startHour: 3,  endHour: 4,  label: 'SB\u00b7LN' },
+  { startHour: 10, endHour: 11, label: 'SB\u00b7NY' },
+  { startHour: 14, endHour: 15, label: 'SB\u00b7AF' },
+]
+
+function inferIs1H(candles: Candle[]): boolean {
+  if (candles.length < 2) return false
+  const gap = Math.abs(candles[1].time - candles[0].time)
+  return gap >= 3000 && gap <= 4200 // ~3600s = 1H
+}
+
 export default function SessionZoneLayer({ zones, candles, xScale, height }: Props) {
   if (candles.length === 0) return null
+
+  const is1H = inferIs1H(candles)
 
   return (
     <g className="session-zones">
@@ -115,6 +132,60 @@ export default function SessionZoneLayer({ zones, candles, xScale, height }: Pro
               textAnchor="middle"
             >
               {style.timeLabel}
+            </text>
+          </g>
+        )
+      })}
+
+      {/* Silver Bullet window markers — 1H only */}
+      {is1H && SILVER_BULLET_WINDOWS_UTC.map((sbw) => {
+        const windowCandles = candles.filter((c) => {
+          const hour = new Date(c.time * 1000).getUTCHours()
+          return hour >= sbw.startHour && hour < sbw.endHour
+        })
+        if (windowCandles.length === 0) return null
+
+        const firstX = xScale(windowCandles[0].time) ?? 0
+        const lastX = xScale(windowCandles[windowCandles.length - 1].time) ?? 0
+        const bw = xScale.bandwidth()
+        const sbX = firstX
+        const sbW = lastX - firstX + bw
+
+        if (sbW <= 0) return null
+
+        return (
+          <g key={sbw.label}>
+            {/* Window background fill */}
+            <rect
+              x={sbX}
+              y={0}
+              width={sbW}
+              height={height}
+              fill="rgba(20,184,166,0.06)"
+            />
+            {/* Left dashed border */}
+            <line
+              x1={sbX} y1={0} x2={sbX} y2={height}
+              stroke="#14b8a6" strokeWidth={0.5}
+              strokeDasharray="3 3"
+            />
+            {/* Right dashed border */}
+            <line
+              x1={sbX + sbW} y1={0} x2={sbX + sbW} y2={height}
+              stroke="#14b8a6" strokeWidth={0.5}
+              strokeDasharray="3 3"
+            />
+            {/* Label */}
+            <text
+              x={sbX + sbW / 2}
+              y={STRIP_HEIGHT + 12}
+              fill="#2dd4bf"
+              fontSize={8}
+              fontFamily="var(--font-geist-mono), monospace"
+              textAnchor="middle"
+              opacity={0.8}
+            >
+              {sbw.label}
             </text>
           </g>
         )

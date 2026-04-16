@@ -102,8 +102,8 @@ export interface JudasSignal {
   // Candle warnings
   warnings: CandleWarning[]
 
-  // Entry engine
-  entry: EntrySignal
+  // Entry engines — all active signals across all models, sorted by confidenceScore desc
+  entries: EntrySignal[]
 
   // Meta
   computedAt: string
@@ -166,7 +166,14 @@ export interface EntryZoneRange {
   source: string          // e.g. "Bullish OB" or "FVG midpoint"
 }
 
+export type EntryModel = 'judas_sweep' | 'fvg_fill' | 'cisd' | 'silver_bullet'
+
 export interface EntrySignal {
+  // ── Model identifier ───────────────────────────────────────────
+  model: EntryModel
+  modelLabel: string          // human label: "Judas Sweep" / "FVG Fill" / etc
+  // ────────────────────────────────────────────────────────────────
+
   direction: EntryDirection
   confidence: EntryConfidence
   confidenceScore: number    // 0–100
